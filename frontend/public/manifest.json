@@ -1,6 +1,6 @@
 {
-  "name": "Lina System ❤️",
-  "short_name": "Lina System ❤️",
+  "name": "Lina's System ❤️",
+  "short_name": "Lina's System ❤️",
   "description": "Lina's Medicine System. Made with ❤️ by Tony Joseph",
   "start_url": "/",
   "scope": "/",
@@ -9,8 +9,8 @@
     "standalone",
     "fullscreen"
   ],
-  "background_color": "#011E46",
-  "theme_color": "#011E46",
+  "background_color": "#ffffff",
+  "theme_color": "#f2b3d0",
   "orientation": "any",
   "id": "/",
   "categories": [
