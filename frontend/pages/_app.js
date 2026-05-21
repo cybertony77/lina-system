@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import '@mantine/core/styles.css';
 import '@mantine/carousel/styles.css';
 import { MantineProvider } from '@mantine/core';
+import NextJsApp from 'next/app';
 import { useRouter } from "next/router";
 import { useEffect, useState, useMemo } from "react";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -47,6 +48,7 @@ function DevToolsProtection({ userRole, devtoolsBlockEnabled }) {
     '/sign-up',
     '/contact_developer',
     '/contact_assistants',
+    '/marketing_page',
     '/forgot_password',
     '/404',
     '/student_not_found'
@@ -275,6 +277,7 @@ function DevToolsProtection({ userRole, devtoolsBlockEnabled }) {
       '/sign-up',
       '/contact_developer',
       '/contact_assistants',
+      '/marketing_page',
       '/forgot_password',
       '/404',
       '/student_not_found'
@@ -450,6 +453,7 @@ function DevToolsProtection({ userRole, devtoolsBlockEnabled }) {
       '/sign-up',
       '/contact_developer',
       '/contact_assistants',
+      '/marketing_page',
       '/forgot_password',
       '/404',
       '/student_not_found'
@@ -676,7 +680,7 @@ function Preloader() {
       left: 0,
       width: '100%',
       height: '100%',
-      background: 'linear-gradient(300deg,rgba(37, 150, 190, 1) 0%, rgba(183, 200, 226, 1) 50%, rgba(242, 202, 220, 1) 100%);',
+      background: 'linear-gradient(380deg, #1FA8DC 0%, #FEB954 100%);',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -883,7 +887,7 @@ export default function App({ Component, pageProps }) {
   const [isSubscriptionEnabled, setIsSubscriptionEnabled] = useState(true); // Default to true
 
   // Define public pages using useMemo to prevent recreation on every render
-  const publicPages = useMemo(() => ["/", "/sign-up", "/contact_developer", "/contact_assistants", "/404", "/forgot_password", "/student_not_found", "/dashboard/student_info"], []);
+  const publicPages = useMemo(() => ["/", "/sign-up", "/contact_developer", "/contact_assistants", "/marketing_page", "/404", "/forgot_password", "/student_not_found", "/dashboard/student_info"], []);
   
   // Define pages that should never show header/footer (even if authenticated)
   const noHeaderFooterPages = useMemo(() => ["/", "/sign-up", "/student_dashboard/my_homeworks/start", "/student_dashboard/my_quizzes/start"], []);
@@ -1485,9 +1489,66 @@ export default function App({ Component, pageProps }) {
                 </div>
                 <Footer />
               </div>
+            ) : router.pathname === "/marketing_page" ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  minHeight: "100vh",
+                }}
+              >
+                <Component {...pageProps} />
+                <Footer />
+              </div>
             ) : (
               <Component {...pageProps} />
             )}
+            <ReactQueryDevtools initialIsOpen={false} />
+          </MantineProvider>
+        </ErrorBoundary>
+      </QueryClientProvider>
+    );
+  }
+
+  // Marketing page:
+  // - visitors/students use the marketing-page header
+  // - assistants/admins/developers use the main app Header
+  const usesMainHeaderOnMarketingPage =
+    userRole === 'assistant' || userRole === 'admin' || userRole === 'developer';
+  if (router.pathname === '/marketing_page' && !usesMainHeaderOnMarketingPage) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <MantineProvider>
+            <DevToolsProtection userRole={userRole} devtoolsBlockEnabled={devtoolsBlockEnabled} />
+            {showExpiryWarning && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#ff6b6b',
+                  color: 'white',
+                  padding: '10px',
+                  textAlign: 'center',
+                  zIndex: 9999,
+                  fontWeight: 'bold',
+                }}
+              >
+                ⚠️ Your session will expire soon. Please save your work and log in again.
+              </div>
+            )}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '100vh',
+              }}
+            >
+              <Component {...pageProps} />
+              <Footer />
+            </div>
             <ReactQueryDevtools initialIsOpen={false} />
           </MantineProvider>
         </ErrorBoundary>
@@ -1651,3 +1712,11 @@ export default function App({ Component, pageProps }) {
     </QueryClientProvider>
   );
 }
+
+// Ensures Custom App runs with the Pages Router context during `next build`
+// static generation. Without this, `useRouter()` in this file can throw
+// "NextRouter was not mounted" while prerendering pages.
+App.getInitialProps = async (appContext) => {
+  const appProps = await NextJsApp.getInitialProps(appContext);
+  return { ...appProps };
+};
